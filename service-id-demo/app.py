@@ -109,7 +109,7 @@ def show_filtered_service_ids():
 
 
 @cli.command()
-def list_all_service_ids(prefix):
+def list_all_service_ids():
     client = ibm_client()
     account_id = getAccountId()
     serviceIds = client.list_service_ids(

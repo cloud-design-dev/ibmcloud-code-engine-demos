@@ -23,7 +23,7 @@ def verify_event(req_headers, body, secret):
     sig_header = req_headers.get('X-Hub-Signature')
     if not sig_header or len(sig_header) != 45 or not sig_header.startswith('sha1='):
         return False
-    
+
     # Decode the hex signature
     sig = bytes.fromhex(sig_header[5:])
     
@@ -50,4 +50,4 @@ def webhook():
         return jsonify({'message': 'Signature verification failed.'}), 403
 
 if __name__ == '__main__':
-    app.run(port=5000)
+    app.run(port=5000, debug=True) 

@@ -34,7 +34,7 @@ def verify_event(req_headers, body, secret):
     return hmac.compare_digest(mac.digest(), sig)
 
 # Example usage within a Flask route
-@app.route('/webhook', methods=['POST'])
+@app.route('/', methods=['POST'])
 def webhook():
     """
     Webhook endpoint that verifies GitHub webhook signatures.

@@ -87,7 +87,6 @@ def show_filtered_service_ids():
     ).get_result().get("serviceids")
 
     filtered_serviceIds = []
-    six_months_ago = datetime.now() - relativedelta(months=6)
 
     for serviceId in serviceIds:
         svcid = client.get_service_id(
@@ -98,10 +97,10 @@ def show_filtered_service_ids():
 
         modified_date_str = svcid['modified_at']
         modified_date = parse(modified_date_str).replace(tzinfo=pytz.UTC)
-        six_months_ago = datetime.now(pytz.UTC) - relativedelta(months=6)
+        svc_id_scan_date = current_date - timedelta(days=3)
         authentications = svcid['activity']['authn_count']
 
-        if authentications == 0 and modified_date < six_months_ago:
+        if authentications == 0 and modified_date < svc_id_scan_date:
             filtered_serviceIds.append(serviceId)
 
     print(f"Filtered Service IDs: {filtered_serviceIds}")

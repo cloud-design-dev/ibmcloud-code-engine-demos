@@ -7,7 +7,7 @@ import logging
 from ibm_platform_services import IamIdentityV1
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from ibm_cloud_sdk_core import ApiException
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
 import pandas as pd
@@ -97,10 +97,12 @@ def show_filtered_service_ids():
 
         modified_date_str = svcid['modified_at']
         modified_date = parse(modified_date_str).replace(tzinfo=pytz.UTC)
+        modified_date_date_only = modified_date.date()
         svc_id_scan_date = current_date - timedelta(days=3)
+        svc_id_scan_date_date_only = svc_id_scan_date.date()
         authentications = svcid['activity']['authn_count']
 
-        if authentications == 0 and modified_date < svc_id_scan_date:
+        if authentications == 0 and modified_date_date_only < svc_id_scan_date_date_only:
             filtered_serviceIds.append(serviceId)
 
     print(f"Filtered Service IDs: {filtered_serviceIds}")

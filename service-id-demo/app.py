@@ -98,6 +98,7 @@ def show_filtered_service_ids():
         modified_date_str = svcid['modified_at']
         modified_date = parse(modified_date_str).replace(tzinfo=pytz.UTC)
         modified_date_date_only = modified_date.date()
+        current_date = datetime.now()
         svc_id_scan_date = current_date - timedelta(days=3)
         svc_id_scan_date_date_only = svc_id_scan_date.date()
         authentications = svcid['activity']['authn_count']

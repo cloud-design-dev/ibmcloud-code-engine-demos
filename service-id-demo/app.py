@@ -12,10 +12,31 @@ from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
 import pandas as pd
 import pytz
+import ibm_boto3
+from ibm_botocore.client import Config, ClientError
 
 ibmcloud_api_key = os.environ.get('IBMCLOUD_API_KEY')
 if not ibmcloud_api_key:
     raise ValueError("IBMCLOUD_API_KEY environment variable not found")
+
+cos_instance_crn = os.environ.get('CLOUD_OBJECT_STORAGE_RESOURCE_INSTANCE_ID')
+if not cos_instance_crn:
+    raise ValueError("CLOUD_OBJECT_STORAGE_RESOURCE_INSTANCE_ID environment variable not found. Make sure an Object storage instance is bound to this Code Engine project.")
+
+cos_api_key = os.environ.get('CLOUD_OBJECT_STORAGE_APIKEY')
+if not cos_api_key:
+    raise ValueError("CLOUD_OBJECT_STORAGE_APIKEY environment variable not found. Make sure an Object storage instance is bound to this Code Engine project.")
+
+cos_bucket = os.environ.get('CLOUD_OBJECT_STORAGE_BUCKET')
+if not cos_bucket:
+    raise ValueError("CLOUD_OBJECT_STORAGE_BUCKET environment variable not found. Make sure you set this in Code Engine.")
+
+# Check if 'CE_JOB' environment variable exists and is not empty, if so, use private endpoint
+if os.environ.get('CE_JOB', ''):
+    cos_endpoint = "https://s3.direct.us-south.cloud-object-storage.appdomain.cloud"
+else:
+    cos_endpoint = "https://s3.us-south.cloud-object-storage.appdomain.cloud"
+
 
 def setup_logging(default_path='logging.json', default_level=logging.info, env_key='LOG_CFG'):
     path = default_path
@@ -170,9 +191,23 @@ def filter_and_export_service_ids():
     # Optionally, export to Excel
     df = pd.DataFrame(filtered_serviceIds)
     df.to_excel('filtered_service_ids.xlsx', index=False)
-
+    cos = ibm_boto3.client("s3",
+        ibm_api_key_id=cos_api_key,
+        ibm_service_instance_id=cos_instance_crn,
+        config=Config(signature_version="oauth"),
+        ibm_auth_endpoint="https://iam.cloud.ibm.com/identity/token",
+        endpoint_url=cos_endpoint
+    )
+    current_datetime = datetime.now().strftime("%Y-%m-%d-%H-%M")
+    item_name = f"{current_datetime}-filtered-service-ids.xlsx"
     print("Filtered service IDs have been written to 'filtered_service_ids.xlsx'")
-
+    try:
+        cos.put_object(Body=df, Bucket=cos_bucket, Key=item_name)
+        print("Item: {0} created!".format(item_name))
+    except ClientError as be:
+        print("CLIENT ERROR: {0}\n".format(be))
+    except Exception as e:
+        print("Unable to create text file: {0}".format(e))
 ## TODO: Create some dummy service ids on personal account and use that to test removing un-used service ids
 @cli.command()
 def delete_unused_service_ids():
@@ -201,6 +236,19 @@ def delete_unused_service_ids():
       )
     else:
       print(f"Service ID {service_id} has {authentications} authentications and will not be deleted.")
+
+# def create_text_file(file_text, bucket_name, item_name):
+#     print("Creating new item: {0}".format(item_name))
+#     try:
+#         cos.put_object(Body=file_text, Bucket=bucket_name, Key=item_name)
+#         print("Item: {0} created!".format(item_name))
+#     except ClientError as be:
+#         print("CLIENT ERROR: {0}\n".format(be))
+#     except Exception as e:
+#         print("Unable to create text file: {0}".format(e))
+
+
+
 
 if __name__ == '__main__':
     cli()

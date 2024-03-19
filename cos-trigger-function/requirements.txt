@@ -1,0 +1,11 @@
+certifi==2024.2.2
+charset-normalizer==3.3.2
+ibm-cos-sdk==2.13.4
+ibm-cos-sdk-core==2.13.4
+ibm-cos-sdk-s3transfer==2.13.4
+idna==3.6
+jmespath==1.0.1
+python-dateutil==2.9.0.post0
+requests==2.31.0
+six==1.16.0
+urllib3==2.1.0

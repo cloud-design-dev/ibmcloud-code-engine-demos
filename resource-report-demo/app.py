@@ -262,20 +262,28 @@ def write_excel():
             resource_group_id=resource_group_id
         ).get_result()
         
-        # Create a new sheet for each resource group
+        result = resource_list.get("resources")
+        crn_slug = extract_service_name(result.get('crn')) if 'crn' in result else None
+        is_type = extract_is_type(result.get('crn')) if 'crn' in result and crn_slug == 'is' else None
+        if is_type:
+            result['is_type'] = is_type
+            # Create a new sheet for each resource group
         ws = wb.create_sheet(title=resource_group_name)
         
         # Write the headers
-        headers = ["Resource ID", "Resource Name", "Resource Type"]
+        headers = ["Resource Name", "Resource Type", "Resource ID", "CRN Slug", "Created By", "IS Type"]
         for col_num, column_title in enumerate(headers, 1):
             col_letter = get_column_letter(col_num)
             ws['{}1'.format(col_letter)] = column_title
         
         # Write the resources
-        for row_num, resource in enumerate(resource_list["resources"], 2):
+        for row_num, resource in enumerate(result, 2):
             ws.cell(row=row_num, column=1, value=resource["name"])
-            ws.cell(row=row_num, column=2, value=resource["guid"])
-            ws.cell(row=row_num, column=3, value=resource["resource_plan_id"])
+            ws.cell(row=row_num, column=2, value=resource["resource_id"])
+            ws.cell(row=row_num, column=3, value=resource["id"])
+            ws.cell(row=row_num, column=4, value=crn_slug)
+            ws.cell(row=row_num, column=5, value=resource["created_by"])
+            ws.cell(row=row_num, column=6, value=is_type)
     
     # Save the workbook
     wb.save("resource_groups.xlsx")

@@ -46,14 +46,14 @@ def setup_logging(default_path='logging.json', default_level=logging.info, env_k
         logging.basicConfig(level=default_level)
 
 def iam_client():  
-  authenticator = IAMAuthenticator(apikey=ibmcloud_api_key)
-  iamIdentityService = IamIdentityV1(authenticator=authenticator)
-  return iamIdentityService
+    authenticator = IAMAuthenticator(apikey=ibmcloud_api_key)
+    iamIdentityService = IamIdentityV1(authenticator=authenticator)
+    return iamIdentityService
 
 def usage_client():  
-  authenticator = IAMAuthenticator(apikey=ibmcloud_api_key)
-  usageReportService = UsageReportsV4(authenticator=authenticator)
-  return usageReportService
+    authenticator = IAMAuthenticator(apikey=ibmcloud_api_key)
+    usageReportService = UsageReportsV4(authenticator=authenticator)
+    return usageReportService
 
 def get_account_id():
     try:

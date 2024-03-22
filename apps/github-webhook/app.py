@@ -43,6 +43,7 @@ def webhook():
     body = request.data
     if verify_event(request.headers, body, GIT_SECRET):
         # Signature verified
+        print(body)
         print("Signature verified.")
         return jsonify({'message': 'Signature verified.'}), 200
     else:

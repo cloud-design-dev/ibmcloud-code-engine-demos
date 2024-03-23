@@ -13,4 +13,4 @@ COPY logging.json ./logging.json
 RUN chmod +x app.py
 
 # Default command
-ENTRYPOINT [ "./app.py" ]
+ENTRYPOINT [ "python", "./app.py" ]

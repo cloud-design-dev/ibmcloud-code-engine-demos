@@ -16,6 +16,7 @@
 import os
 import json
 import click
+import time
 import logging
 import ibm_vpc
 from ibm_vpc import VpcV1

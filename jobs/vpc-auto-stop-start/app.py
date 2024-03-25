@@ -18,6 +18,7 @@ import json
 import click
 import logging
 import ibm_vpc
+from ibm_vpc import VpcV1
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from ibm_cloud_sdk_core import ApiException
 

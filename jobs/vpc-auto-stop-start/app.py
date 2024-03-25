@@ -37,10 +37,17 @@ def setup_logging(default_path='logging.json', default_level=logging.info, env_k
     else:
         logging.basicConfig(level=default_level)
 
-def vpc_client():  
-  authenticator = IAMAuthenticator(apikey=ibmcloud_api_key)
-  client = ibm_vpc.VpcV1(authenticator=authenticator)
-  return client
+def vpc_client(region):
+    authenticator = IAMAuthenticator(apikey=ibmcloud_api_key)
+    try:
+        vpc_service = VpcV1(authenticator=authenticator)
+        vpc_service.set_service_url(f'https://{region}.iaas.cloud.ibm.com/v1')
+    except ApiException as e:
+        logging.error("API exception {}.".format(str(e)))
+        quit(1)
+    return vpc_service
+
+
 
 @click.group()
 def cli():
@@ -49,11 +56,41 @@ def cli():
 
 
 @cli.command()
-def list_vpc_instances():
-    client = vpc_client()
+def stop_vpc_instances():
+    workloads_regions = ['us-south', 'us-east', 'ca-tor']
     try:
-        response = client.list_instances()
-        print(response)
+        for region in workloads_regions:
+            client = vpc_client(region)
+            list_instances = client.list_instances().get_result()['instances']
+            for instance in list_instances:
+                instance_id = instance['id']
+                response = client.create_instance_action(instance_id=instance_id, type='stop').get_result()
+                logging.info(response)
     except ApiException as e:
         print("Failed to list instances: %s\n" % e)
 
+@cli.command()
+def start_vpc_instances():
+    workloads_regions = ['us-south', 'us-east', 'ca-tor']
+    try:
+        for region in workloads_regions:
+            client = vpc_client(region)
+            list_instances = client.list_instances().get_result()['instances']
+            for instance in list_instances:
+                instance_id = instance['id']
+                response = client.create_instance_action(instance_id=instance_id, type='start').get_result()
+                logging.info(response)
+
+                while True:
+                    instance_status = client.get_instance(id=instance_id).get_result()['status']
+                    if instance_status == 'running':
+                        logging.info(f"Instance {instance_id} is now running")
+                        break
+                    else:
+                        logging.info(f"Instance {instance_id} status: {instance_status}. Waiting...")
+                        time.sleep(5) 
+    except ApiException as e:
+        print("Failed to list instances: %s\n" % e)
+
+if __name__ == '__main__':
+    cli()

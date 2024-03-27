@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-from flask import Flask, request, jsonify
+"""Module providing functions to verify GitHub webhook signatures."""
 import os
 import hmac
 import hashlib
+from flask import Flask, request, jsonify
+
 
 app = Flask(__name__)
 # Fetch the GitHub secret from environment variables
-GIT_SECRET = os.environ.get("GIT_SECRET")
+git_secret = os.environ.get("GIT_SECRET")
 
 def verify_event(req_headers, body, secret):
     """
@@ -27,12 +29,13 @@ def verify_event(req_headers, body, secret):
 
     # Decode the hex signature
     sig = bytes.fromhex(sig_header[5:])
-    
     # Create a new HMAC object using the secret and the SHA1 algorithm
     mac = hmac.new(bytes(secret, 'utf-8'), msg=body, digestmod=hashlib.sha1)
-    
+
+    digest = hmac.compare_digest(mac.digest(), sig)
+    print(digest)
     # Compare the HMAC signature with the provided signature
-    return hmac.compare_digest(mac.digest(), sig)
+    return digest
 
 # Example usage within a Flask route
 @app.route('/', methods=['POST'])
@@ -40,16 +43,15 @@ def webhook():
     """
     Webhook endpoint that verifies GitHub webhook signatures.
     """
-    body = request.data
-    if verify_event(request.headers, body, GIT_SECRET):
-        # Signature verified
-        print(body)
-        print("Signature verified.")
-        return jsonify({'message': 'Signature verified.'}), 200
-    else:
-        # Signature verification failed
-        print("Signature verification failed.")
-        return jsonify({'message': 'Signature verification failed.'}), 403
+    try:
+        body = request.data
+        headers = request.headers
+        print(headers)
+        verify_event(request.headers, body, git_secret)
+        return jsonify({'message': 'Received and verified the event'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True) 
+    app.run(port=5000, debug=True)

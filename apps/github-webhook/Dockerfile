@@ -12,5 +12,7 @@ COPY logging.json ./logging.json
 # Copy the entrypoint script and make it executable
 RUN chmod +x main.py
 
+EXPOSE 5000
+
 # Default command
 ENTRYPOINT [ "./main.py" ]

@@ -6,8 +6,12 @@ app = Flask(__name__)
 
 @app.route('/webhook', methods=['POST'])
 def respond():
-    print(request.json) # This will print the payload sent by GitHub
-    return jsonify({'status': 'success'})
+
+    payload = request.json
+# This will print the payload sent by GitHub
+    print(payload)
+
+    return payload
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)

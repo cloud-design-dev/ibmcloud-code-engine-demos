@@ -38,7 +38,7 @@ def verify_event(req_headers, body, secret):
     return digest
 
 # Example usage within a Flask route
-@app.route('/', methods=['POST'])
+@app.route('/webhook', methods=['POST'])
 def webhook():
     """
     Webhook endpoint that verifies GitHub webhook signatures.

@@ -113,21 +113,18 @@ def get_current_month_usage():
             names=True
         ).get_result()
 
-        # print(usage)
+        total_cost = 0
+        
         for resource in usage['resources']:
             name = resource['resource_name']
             cost = resource['plans'][0]['cost']
             type = resource['resource_id']
             rounded_cost = round(cost, 4)
+            total_cost += rounded_cost
             print(f"Resource Name: {name}, Cost: {rounded_cost}, Resource Type: {type}")
-            # print(name)
             
-
-        # for resource in usage['resources']:
-        #     rs_data = resource
-        # # for resource in usage['resources']:
-        # #     rs_data = resource
-        # # data.append(rs_data)
+        print(f"\nTotal Cost: {round(total_cost, 4)}") 
+ 
     except ApiException as e:
         if e.code == 424:
             logging.warning("API exception {}.".format(str(e)))
@@ -136,59 +133,8 @@ def get_current_month_usage():
             logging.error("API exception {}.".format(str(e)))
             quit(1)
 
-    # data.append(usage)
-    # print(type(data))
-    # print(json.dumps(data, indent=2))
     return data
 
-# @click.command()
-# @click.option('--all', is_flag=True, help='List all resource usage including those with zero cost')
-# def get_usage(all):
-
-
-#     try:
-#         accountId = getAccountId(ibmcloud_api_key)
-#         usageData = getCurrentMonthAccountUsage(accountId)
-#         creditsData = getCurrentAccountCredits(accountId)
-
-#         for credit in creditsData:
-#             credit_balance = str(round(credit[0]['balance'], 0), 4)
-#             print(f"Credit Balance: {credit_balance}")
-#         resources = usageData[0]['resources']
-#         # print(json.dumps(resources, indent=2))
-#         console = Console()
-#         table = Table(show_header=True, header_style="bold magenta")
-
-#     # Add columns
-#         table.add_column("Resource Name", style="dim", width=35)
-#         # table.add_column("Resource ID")
-#         table.add_column("Plan Name")
-#         table.add_column("Billable Metrics")
-#         # table.add_column("Billable Units")
-#         table.add_column("Cost", justify="right")
-#         for resource in resources:
-#             resource_name = resource['resource_name']
-#             resource_id = resource['resource_id']
-#             for plan in resource['plans']:
-#             # Check if plan_id starts with "classic_infrastructure" and skip it if true
-#                 # if plan['plan_id'].startswith("classic_infrastructure"):
-#                 #     continue
-
-#                 plan_name = plan['plan_name']
-#                 cost = round(plan.get('cost', 0), 4)
-
-            
-#                 metric_list = [f"{usage['metric_name']}" for usage in plan['usage']]
-#                 metric_units = ", ".join(metric_list)
-#                 unit_list = [f"{usage['unit_name']}" for usage in plan['usage']]
-#                 unit_name = ", ".join(unit_list)
-#                 if all or cost > 0:
-#                     table.add_row(resource_name, plan_name, metric_units, str(cost))
-
-#         console.print(table)
-#     except ApiException as e:
-#         logging.error("API exception {}.".format(str(e)))
-#         quit(1)
 
 if __name__ == '__main__':
     cli()

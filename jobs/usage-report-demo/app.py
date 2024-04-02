@@ -221,7 +221,7 @@ def pretty_print_usage():
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("Resource Name", style="dim", width=35)
         table.add_column("Plan Name")
-        table.add_column("Billable Metrics")
+        # table.add_column("Billable Metrics")
         table.add_column("ResourceID")
         table.add_column("Cost", justify="right")
 
@@ -237,7 +237,7 @@ def pretty_print_usage():
                 metric_list = [f"{usage['metric_name']}" for usage in plan['usage']]
                 metric_units = ", ".join(metric_list)
                 if cost > 0:
-                    table.add_row(resource_name, plan_name, metric_units, resource_id, str(cost))
+                    table.add_row(resource_name, plan_name, resource_id, str(cost))
         console.print(table)
 
 

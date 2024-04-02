@@ -125,9 +125,13 @@ def get_current_credit_balance():
         ).get_result()
 
         account_credit_balance = []
+        current_date = datetime.now()
+
         for offer in account_credits['offers']:
-            starting_credit_balance = offer['credits']['balance']
-            account_credit_balance.append(starting_credit_balance)
+            expires_on = datetime.strptime(offer['expires_on'], "%Y-%m-%dT%H:%M:%SZ")
+            if expires_on > current_date:
+                starting_credit_balance = offer['credits']['balance']
+                account_credit_balance.append(starting_credit_balance)
 
         credit_balance = sum(account_credit_balance)
         print(f"Credit Balance: {credit_balance}")

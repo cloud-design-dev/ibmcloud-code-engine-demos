@@ -1,6 +1,6 @@
 # Scan Floating IPs and Classic IaaS
 
-This python script will scan all the Floating IPs associated with your IBM Cloud account as well as the classic virtual and bare metal servers with public IPs. 
+This python script will scan all the Floating IPs associated with your IBM Cloud account as well as the classic virtual and bare metal servers with public IPs. The script currently scans for `SSH`, `RDP`, `Telnet`, `FTP`, and `SMTP`. 
 
 ## Run locally
 

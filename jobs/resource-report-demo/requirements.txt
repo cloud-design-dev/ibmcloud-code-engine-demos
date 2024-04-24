@@ -4,7 +4,7 @@ click==8.1.7
 et-xmlfile==1.1.0
 ibm-cloud-sdk-core==3.19.2
 ibm-platform-services==0.51.2
-idna==3.6
+idna==3.7
 numpy==1.26.4
 openpyxl==3.1.2
 pandas==2.2.1

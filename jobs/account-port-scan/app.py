@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Author: Ryan Tiffany
-# Copyright (c) 2023
+# Copyright (c) 2024
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,49 +16,36 @@
 __author__ = 'ryantiffany'
 import sys
 import os
+import socket
 import logging
 import SoftLayer
 import ibm_vpc
 from ibm_cloud_sdk_core import ApiException
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
-import socket
 
+# Retrieve the IBM Cloud API key from the environment
 ibmcloud_api_key = os.environ.get('IBMCLOUD_API_KEY')
 if not ibmcloud_api_key:
     raise ValueError("IBMCLOUD_API_KEY environment variable not found")
 
-ibmcloud_classic_username = os.environ.get('IBMCLOUD_CLASSIC_USERNAME')
-if not ibmcloud_classic_username:
-    raise ValueError("IBMCLOUD_CLASSIC_USERNAME environment variable not found")
+# Create an IAM authenticator object
+authenticator = IAMAuthenticator(apikey=ibmcloud_api_key)
 
-ibmcloud_classic_api_key = os.environ.get('IBMCLOUD_CLASSIC_API_KEY')
-if not ibmcloud_classic_api_key:
-    raise ValueError("IBMCLOUD_CLASSIC_API_KEY environment variable not found")
-
-authenticator = IAMAuthenticator(
-    apikey=ibmcloud_api_key
-)
-
-def setup_logging(default_path='logging.json', default_level=logging.info, env_key='LOG_CFG'):
-    path = default_path
-    value = os.getenv(env_key, None)
-    if value:
-        path = value
-    if os.path.exists(path):
-        with open(path, 'rt') as f:
-            config = json.load(f)
-        logging.config.dictConfig(config)
-    else:
-        logging.basicConfig(level=default_level)
-
-def softlayer_client():
+def sl_iam_client():
+    """
+    Create a SoftLayer client object using the IBM Cloud API key
+    This function is used to authenticate to the SoftLayer API
+    """
     client = SoftLayer.create_client_from_env(
-        username=ibmcloud_classic_username, 
-        api_key=ibmcloud_classic_api_key
-        )
+        username="apikey",
+        api_key=ibmcloud_api_key
+    )
     return client
 
 def get_regions():
+    """
+    Retrieve a list of IBM Cloud VPC regions
+    """
     service = ibm_vpc.VpcV1(authenticator=authenticator)
     service.set_service_url(f'https://us-south.iaas.cloud.ibm.com/v1')
     try:
@@ -67,10 +54,13 @@ def get_regions():
         region_names = [region['name'] for region in regions]
         return region_names
     except ApiException as e:
-        print("Unable to retrieve regions: {0}".format(e))
+        logging.error("Unable to retrieve regions: {0}".format(e))
         sys.exit()
 
 def get_floating_ips():
+    """
+    Retrieve a list of IBM Cloud VPC floating IPs across all regions
+    """
     floating_ips = []
     regions = get_regions()
     for region in regions:
@@ -83,8 +73,12 @@ def get_floating_ips():
     return floating_ips
 
 def get_classic_infrastructure_instances():
+    """
+    Retrieve of public IPs associated with classic
+    infrastructure virtual guests
+    """
     classic_host_ips = []
-    client = softlayer_client()
+    client = sl_iam_client()
     vms = client['Account'].getVirtualGuests()
     filtered_vms = [s for s in vms if s.get('primaryIpAddress')]
 
@@ -93,8 +87,12 @@ def get_classic_infrastructure_instances():
     return classic_host_ips
 
 def get_classic_infrastructure_hardware():
+    """
+    Retrieve of public IPs associated with classic
+    bare metal servers and network gateways
+    """
     classic_host_ips = []
-    client = softlayer_client()
+    client = sl_iam_client()
     bare_metals = client['Account'].getHardware()
     filtered_bms = [s for s in bare_metals if s.get('primaryIpAddress')]
 
@@ -104,6 +102,9 @@ def get_classic_infrastructure_hardware():
 
 
 def scan_top_ports(target):
+    """
+    Scan the top ports on a target IP address
+    """
     open_ports = []
     top_ports = [21, 22, 25, 23, 3389]
     for port in top_ports:
@@ -121,20 +122,23 @@ def scan_top_ports(target):
     return open_ports
 
 def main():
+    """
+    Main function to scan IBM Cloud VPC and classic infrastructure
+    """
     print("Starting scan of floating IPs...")
     targets = get_floating_ips()
     for target in targets:
         open_ports = scan_top_ports(target)
         if open_ports: 
-            print(f"Open ports on {target}: {open_ports}")
-    print("VPC Floating IP Scan complete.")
+            logging.info(f"Open ports on {target}: {open_ports}")
+    logging.info("VPC Floating IP Scan complete.")
 
     print("Starting scan on classic infrastructure virtual guests...")
     targets = get_classic_infrastructure_instances()
     for target in targets:
         open_ports = scan_top_ports(target)
         if open_ports: 
-            print(f"Open ports on {target}: {open_ports}")
+            logging.info(f"Open ports on {target}: {open_ports}")
     print("Classic Virtual Guests Scan complete.")
 
     print("Starting scan on classic infrastructure bare metals...")
@@ -142,8 +146,8 @@ def main():
     for target in targets:
         open_ports = scan_top_ports(target)
         if open_ports: 
-            print(f"Open ports on {target}: {open_ports}")
+            logging.info(f"Open ports on {target}: {open_ports}")
     print("Classic Bare Metals Scan complete.")
-    
+
 if __name__ == "__main__":
     main()

@@ -35,6 +35,23 @@ Create an IAM authenticator object for use with the VPC API.
 """
 authenticator = IAMAuthenticator(apikey=ibmcloud_api_key)
 
+
+def setup_logging(default_path='logging.json', default_level=logging.info, env_key='LOG_CFG'):
+    """
+    Set up logging configuration and use logging.json to format logs
+    """
+    path = default_path
+    value = os.getenv(env_key, None)
+    if value:
+        path = value
+    if os.path.exists(path):
+        with open(path, 'rt') as f:
+            config = json.load(f)
+        logging.config.dictConfig(config)
+    else:
+        logging.basicConfig(level=default_level)
+
+
 def sl_iam_client():
     """
     Create a SoftLayer client object using the IBM Cloud API key
@@ -46,6 +63,7 @@ def sl_iam_client():
         api_key=ibmcloud_api_key
     )
     return client
+
 
 def get_regions():
     """
@@ -62,6 +80,7 @@ def get_regions():
         logging.error("Unable to retrieve regions: {0}".format(e))
         sys.exit()
 
+
 def get_floating_ips():
     """
     Retrieve a list of IBM Cloud VPC floating IPs across all regions
@@ -77,6 +96,7 @@ def get_floating_ips():
             floating_ips.append(ip_address)
     return floating_ips
 
+
 def get_classic_infrastructure_instances():
     """
     Retrieve of public IPs associated with classic
@@ -90,6 +110,7 @@ def get_classic_infrastructure_instances():
     for vm in filtered_vms:
         classic_host_ips.append(vm['primaryIpAddress'])
     return classic_host_ips
+
 
 def get_classic_infrastructure_hardware():
     """
@@ -126,6 +147,7 @@ def scan_top_ports(target):
             pass
     return open_ports
 
+
 def main():
     """
     Main function to scan IBM Cloud VPC and classic infrastructure
@@ -153,6 +175,7 @@ def main():
         if open_ports: 
             logging.info(f"Open ports on {target}: {open_ports}")
     print("Classic Bare Metals Scan complete.")
+
 
 if __name__ == "__main__":
     main()

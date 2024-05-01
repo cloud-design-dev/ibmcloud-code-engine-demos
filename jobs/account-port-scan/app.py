@@ -23,18 +23,23 @@ import ibm_vpc
 from ibm_cloud_sdk_core import ApiException
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 
-# Retrieve the IBM Cloud API key from the environment
+"""
+Pull IBM Cloud API key from environment. If not set, raise an error. 
+"""
 ibmcloud_api_key = os.environ.get('IBMCLOUD_API_KEY')
 if not ibmcloud_api_key:
     raise ValueError("IBMCLOUD_API_KEY environment variable not found")
 
-# Create an IAM authenticator object
+"""
+Create an IAM authenticator object for use with the VPC API.
+"""
 authenticator = IAMAuthenticator(apikey=ibmcloud_api_key)
 
 def sl_iam_client():
     """
     Create a SoftLayer client object using the IBM Cloud API key
     This function is used to authenticate to the SoftLayer API
+    and interact with Classic resources.
     """
     client = SoftLayer.create_client_from_env(
         username="apikey",

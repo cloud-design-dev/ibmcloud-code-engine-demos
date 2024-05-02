@@ -157,23 +157,23 @@ def main():
     for target in targets:
         open_ports = scan_top_ports(target)
         if open_ports: 
-            logging.info(f"Open ports on {target}: {open_ports}")
-    logging.info("VPC Floating IP Scan complete.")
+            print(f"Open ports on {target}: {open_ports}")
+    print("VPC Floating IP Scan complete.")
 
     print("Starting scan on classic infrastructure virtual guests...")
     targets = get_classic_infrastructure_instances()
     for target in targets:
         open_ports = scan_top_ports(target)
-        if open_ports: 
-            logging.info(f"Open ports on {target}: {open_ports}")
+        if open_ports:
+            print(f"Open ports on {target}: {open_ports}")
     print("Classic Virtual Guests Scan complete.")
 
     print("Starting scan on classic infrastructure bare metals...")
     targets = get_classic_infrastructure_hardware()
     for target in targets:
         open_ports = scan_top_ports(target)
-        if open_ports: 
-            logging.info(f"Open ports on {target}: {open_ports}")
+        if open_ports:
+            print(f"Open ports on {target}: {open_ports}")
     print("Classic Bare Metals Scan complete.")
 
 

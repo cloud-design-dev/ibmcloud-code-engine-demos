@@ -13,11 +13,9 @@ git clone https://github.com/cloud-design-dev/dts-ce-demo.git
 cd dts-ce-demo/jobs/account-port-scan
 ```
 
-### Set the classic username and cloud API keys
+### Set your IBM Cloud API key
 
 ```shell
-export IBMCLOUD_CLASSIC_USERNAME="YOUR_CLASSIC_IAAS_USER"
-export IBMCLOUD_CLASSIC_API_KEY="YOUR_CLASSIC_IAAS_API_KEY"
 export IBMCLOUD_API_KEY="YOUR_IBMCLOUD_API_KEY"
 ```
 

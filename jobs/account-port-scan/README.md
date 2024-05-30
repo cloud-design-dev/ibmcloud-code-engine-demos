@@ -9,8 +9,8 @@ This python script will scan all the Floating IPs associated with your IBM Cloud
 The first step is to clone the respository and change in to our port scan directory:
 
 ```shell
-git clone https://github.com/cloud-design-dev/dts-ce-demo.git
-cd dts-ce-demo/jobs/account-port-scan
+git clone https://github.com/cloud-design-dev/ibmcloud-code-engine-demos.git
+cd ibmcloud-code-engine-demos/jobs/account-port-scan
 ```
 
 ### Set your IBM Cloud API key
@@ -24,6 +24,10 @@ export IBMCLOUD_API_KEY="YOUR_IBMCLOUD_API_KEY"
 Install the required python SDKs to interact with the classic and vpc resources. 
 
 ```shell
+python3 -m venv .venv
+
+source .venv/bin/activate
+
 pip install -r requirements 
 ```
 
@@ -31,6 +35,6 @@ pip install -r requirements
 
 With the variables set and modules installed, you can run the script:
 
-```
-python app.py
+```shell
+python port-scan-report.py
 ```

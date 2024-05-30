@@ -70,14 +70,14 @@ def get_regions():
     Retrieve a list of IBM Cloud VPC regions
     """
     service = ibm_vpc.VpcV1(authenticator=authenticator)
-    service.set_service_url(f'https://us-south.iaas.cloud.ibm.com/v1')
+    service.set_service_url('https://us-south.iaas.cloud.ibm.com/v1')
     try:
         response = service.list_regions().get_result()
         regions = response['regions']
         region_names = [region['name'] for region in regions]
         return region_names
     except ApiException as e:
-        logging.error("Unable to retrieve regions: {0}".format(e))
+        logging.error("Unable to retrieve regions: %s", e)
         sys.exit()
 
 
@@ -92,7 +92,7 @@ def get_floating_ips():
         service.set_service_url(f'https://{region}.iaas.cloud.ibm.com/v1')
         response = service.list_floating_ips().get_result()
         for fip in response['floating_ips']:
-            ip_address = fip['address'] 
+            ip_address = fip['address']
             floating_ips.append(ip_address)
     return floating_ips
 

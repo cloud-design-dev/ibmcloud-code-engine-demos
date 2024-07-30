@@ -48,7 +48,7 @@ def vpc_client():
         quit(1)
     return vpc_service
 
-ignore_group = ['piku', 'jbmh-locate']
+ignore_group = ['tethys', 'jbmh-locate']
 
 @click.group()
 def cli():

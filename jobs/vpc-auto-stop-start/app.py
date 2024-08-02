@@ -69,7 +69,7 @@ def stop_vpc_instances():
                 instance_id = instance['id']
                 instance_name = instance['name']
                 if instance_name not in ignore_group:
-                    print(f"Stopping instance {instance_id}")
+                    print(f"Stopping instance {instance_name}")
                     response = client.create_instance_action(instance_id=instance_id, type='stop').get_result()
                     logging.info(response)
     except ApiException as e:
@@ -88,19 +88,19 @@ def start_vpc_instances():
             for instance in list_instances:
                 instance_id = instance['id']
                 instance_name = instance['name']
-                if instance_name not in ignore_group:
-                    print(f"Starting instance {instance_id}")
-                    response = client.create_instance_action(instance_id=instance_id, type='start').get_result()
-                    logging.info(response)
+   
+                print(f"Starting instance {instance_name}")
+                response = client.create_instance_action(instance_id=instance_id, type='start').get_result()
+                logging.info(response)
 
-                    while True:
-                        instance_status = client.get_instance(id=instance_id).get_result()['status']
-                        if instance_status == 'running':
-                            logging.info(f"Instance {instance_id} is now running")
-                            break
-                        else:
-                            logging.info(f"Instance {instance_id} status: {instance_status}. Waiting...")
-                            time.sleep(5) 
+                while True:
+                    instance_status = client.get_instance(id=instance_id).get_result()['status']
+                    if instance_status == 'running':
+                        logging.info(f"Instance {instance_id} is now running")
+                        break
+                    else:
+                        logging.info(f"Instance {instance_id} status: {instance_status}. Waiting...")
+                        time.sleep(5) 
     except ApiException as e:
         print("Failed to start instances: %s\n" % e)
 

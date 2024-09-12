@@ -15,9 +15,11 @@
 
 import os
 import json
-import click
+import sys
 import time
 import logging
+import httpx
+import click
 import ibm_vpc
 from ibm_vpc import VpcV1
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
@@ -50,6 +52,45 @@ def vpc_client():
 
 ignore_group = ['tethys', 'jbmh-locate']
 
+def get_iam_token():
+    try:
+        hdrs = { 'Accept' : 'application/json', 'Content-Type' : 'application/x-www-form-urlencoded' }
+        params = { 'grant_type' : 'urn:ibm:params:oauth:grant-type:apikey', 'apikey' : ibmcloud_api_key }
+        resp = httpx.post('https://iam.cloud.ibm.com/identity/token', data = params, headers = hdrs)
+        resp.raise_for_status()
+        response_json = resp.json()
+        iam_token  = response_json['access_token']
+        return iam_token
+
+    except httpx.HTTPError as e:
+        logging.error("HTTP exception {}.".format(str(e)))
+        sys.exit(1)
+
+def send_log_to_ibm_cloud_logs(application_name, subsystem_name, computer_name, message):
+    iam_token = get_iam_token()
+    if not iam_token:
+        raise ValueError("IAM_TOKEN environment variable not found")
+
+    log_data = [{
+        "applicationName": application_name,
+        "subsystemName": subsystem_name,
+        "computerName": computer_name,
+        "text": {"message": message},
+        "category": "cat-1",
+        "className": "class-1",
+        "methodName": "method-1",
+        "threadId": "thread-1"
+    }]
+
+    logging_url = os.environ.get('LOGGING_URL')
+    hdrs = { 'Content-Type' : 'application/json', "Authorization": f"{iam_token}" }
+    resp = httpx.post(logging_url, data=json.dumps(log_data), headers = hdrs)
+    resp.raise_for_status()
+    print(resp.text)
+
+
+
+
 @click.group()
 def cli():
     """Group to hold our commands"""
@@ -71,6 +112,7 @@ def stop_vpc_instances():
                 if instance_name not in ignore_group:
                     print(f"Stopping instance {instance_name}")
                     response = client.create_instance_action(instance_id=instance_id, type='stop').get_result()
+                    send_log_to_ibm_cloud_logs("ce-start-stop-script", "stop-action", f"{instance_name}", f"Stopping instance {instance_name}")
                     logging.info(response)
     except ApiException as e:
         print("Failed to stop instances: %s\n" % e)
@@ -90,6 +132,7 @@ def start_vpc_instances():
                 instance_name = instance['name']
    
                 print(f"Starting instance {instance_name}")
+                send_log_to_ibm_cloud_logs("ce-start-stop-script", "start-action", f"{instance_name}", f"Starting instance {instance_name}")
                 response = client.create_instance_action(instance_id=instance_id, type='start').get_result()
                 logging.info(response)
 

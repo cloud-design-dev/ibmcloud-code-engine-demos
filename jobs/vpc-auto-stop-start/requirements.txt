@@ -1,6 +1,10 @@
+anyio==4.4.0
 certifi==2024.2.2
 charset-normalizer==3.3.2
 click==8.1.7
+h11==0.14.0
+httpcore==1.0.5
+httpx==0.27.0
 ibm-cloud-sdk-core==3.19.2
 ibm-vpc==0.21.0
 idna==3.6
@@ -8,4 +12,5 @@ PyJWT==2.8.0
 python-dateutil==2.9.0.post0
 requests==2.31.0
 six==1.16.0
+sniffio==1.3.1
 urllib3==2.2.1

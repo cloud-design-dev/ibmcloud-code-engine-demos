@@ -2,8 +2,6 @@ const express = require('express');
 const app = express();
 const port = 3000;
 
-const unsplashKey = process.env.UNSPLASH_KEY;
-
 // Set EJS as the view engine
 app.set('view engine', 'ejs');
 
@@ -34,12 +32,8 @@ app.get('/', async (req, res) => {
         // Dynamically import the 'node-fetch' module
         const fetch = (await import('node-fetch')).default;
 
-        // Fetch a random image from Unsplash based on search criteria
-        const response = await fetch('https://api.unsplash.com/photos/random?query=cat&content_filter=high&orientation=landscape', {
-            headers: {
-                'Authorization': `Client-ID ${unsplashKey}`
-            }
-        });
+        // Fetch a random image from https://loremflickr.com
+        const response = await fetch('https://loremflickr.com/640/480');
 
         const data = await response.json();
         const imageUrl = data.urls.regular;
@@ -53,7 +47,7 @@ app.get('/', async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).send('Error fetching image from Unsplash');
+        res.status(500).send('Error fetching image from loremflicker.com');
     }
 });
 

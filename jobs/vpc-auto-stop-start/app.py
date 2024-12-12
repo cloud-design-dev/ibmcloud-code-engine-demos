@@ -50,7 +50,7 @@ def vpc_client():
         quit(1)
     return vpc_service
 
-ignore_group = ['tethys', 'jbmh-locate']
+ignore_group = ['hyperion', 'jbmh-locate']
 
 def get_iam_token():
     try:

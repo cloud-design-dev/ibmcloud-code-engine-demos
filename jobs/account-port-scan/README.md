@@ -39,3 +39,20 @@ With the variables set and modules installed, you can run the script:
 ```shell
 python port-scan-report.py
 ```
+
+### Example Output
+
+```shell
+$ python port-scan-report.py 
+Starting scan of floating IPs...
+Open ports on 52.x.y.z: [22]
+VPC Floating IP Scan complete.
+Starting scan on classic infrastructure virtual guests...
+Open ports on 67.a.b.c: [3389]
+Classic Virtual Guests Scan complete.
+Starting scan on classic infrastructure bare metals...
+Classic Bare Metals Scan complete.
+Sending 3 log entries to IBM Cloud Logging...
+2025-04-24 05:13:20,522 - INFO - Successfully sent 2 log entries to IBM Cloud Logging
+Successfully sent logs to IBM Cloud Logging
+```

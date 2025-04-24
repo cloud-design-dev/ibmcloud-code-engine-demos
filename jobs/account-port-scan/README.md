@@ -13,10 +13,11 @@ git clone https://github.com/cloud-design-dev/ibmcloud-code-engine-demos.git
 cd ibmcloud-code-engine-demos/jobs/account-port-scan
 ```
 
-### Set your IBM Cloud API key
+### Set your IBM Cloud API key and Log Ingestion URL
 
 ```shell
 export IBMCLOUD_API_KEY="YOUR_IBMCLOUD_API_KEY"
+export IBM_CLOUD_LOGGING_ENDPOINT="https://INSTANCE_ID.ingress.REGION.logs.cloud.ibm.com"
 ```
 
 ### Install python requirements

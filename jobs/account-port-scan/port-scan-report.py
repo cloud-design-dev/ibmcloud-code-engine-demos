@@ -17,18 +17,25 @@ __author__ = 'ryantiffany'
 import sys
 import os
 import socket
+import json
 import logging
+import logging.config
+import requests
 import SoftLayer
 import ibm_vpc
 from ibm_cloud_sdk_core import ApiException
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 
 """
-Pull IBM Cloud API key from environment. If not set, raise an error. 
+Pull IBM Cloud API key and Logging endpoint from environment. If not set, raise an error. 
 """
 ibmcloud_api_key = os.environ.get('IBMCLOUD_API_KEY')
 if not ibmcloud_api_key:
     raise ValueError("IBMCLOUD_API_KEY environment variable not found")
+
+cloud_logging_endpoint = os.environ.get('IBM_CLOUD_LOGGING_ENDPOINT')
+if not cloud_logging_endpoint:
+    raise ValueError("IBM_CLOUD_LOGGING_ENDPOINT environment variable not found")
 
 """
 Create an IAM authenticator object for use with the VPC API.
@@ -36,7 +43,7 @@ Create an IAM authenticator object for use with the VPC API.
 authenticator = IAMAuthenticator(apikey=ibmcloud_api_key)
 
 
-def setup_logging(default_path='logging.json', default_level=logging.info, env_key='LOG_CFG'):
+def setup_logging(default_path='logging.json', default_level=logging.INFO, env_key='LOG_CFG'):
     """
     Set up logging configuration and use logging.json to format logs
     """
@@ -148,14 +155,115 @@ def scan_top_ports(target):
     return open_ports
 
 
+def get_iam_token():
+    """
+    Get IAM token using the API key for authenticating with IBM Cloud Logging
+    """
+    url = "https://iam.cloud.ibm.com/identity/token"
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json"
+    }
+    data = {
+        "grant_type": "urn:ibm:params:oauth:grant-type:apikey",
+        "apikey": ibmcloud_api_key
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, data=data)
+        response.raise_for_status()
+        token_data = response.json()
+        return token_data["access_token"]
+    except requests.exceptions.RequestException as e:
+        logging.error("Error obtaining IAM token: %s", e)
+        return None
+
+
+def format_scan_results(target_type, results):
+    """
+    Format scan results to be sent to IBM Cloud Logging
+    
+    Args:
+        target_type (str): Type of target (floating_ip, virtual_guest, bare_metal)
+        results (dict): Dictionary with IP addresses as keys and lists of open ports as values
+    
+    Returns:
+        list: List of formatted log entries
+    """
+    log_entries = []
+    computer_name = os.environ.get('CE_PROJECT_ID', socket.gethostname())
+    for ip, ports in results.items():
+        if ports:  # Only include IPs with open ports
+            log_entry = {
+                "applicationName": "account-port-scan",
+                "subsystemName": f"{target_type}-scan",
+                "computerName": computer_name,
+                "text": {
+                    "ip_address": ip,
+                    "open_ports": ports,
+                    "target_type": target_type,
+                    "message": f"Open ports detected on {target_type} {ip}: {ports}"
+                }
+            }
+            log_entries.append(log_entry)
+    
+    return log_entries
+
+
+def send_to_ibm_cloud_logging(log_entries):
+    """
+    Send log entries to IBM Cloud Logging
+    
+    Args:
+        log_entries (list): List of formatted log entries
+    
+    Returns:
+        bool: True if logs were sent successfully, False otherwise
+    """
+    if not log_entries:
+        logging.info("No open ports detected, no logs to send")
+        return True
+    
+    # Get log endpoint from environment variable or use default from example
+    log_endpoint = f"{cloud_logging_endpoint}/logs/v1/singles"
+    
+    token = get_iam_token()
+    if not token:
+        return False
+    
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}"
+    }
+    
+    try:
+        response = requests.post(log_endpoint, headers=headers, json=log_entries)
+        response.raise_for_status()
+        logging.info("Successfully sent %d log entries to IBM Cloud Logging", len(log_entries))
+        return True
+    except requests.exceptions.RequestException as e:
+        logging.error("Error sending logs to IBM Cloud Logging: %s", e)
+        return False
+
+
 def main():
     """
     Main function to scan IBM Cloud VPC and classic infrastructure
+    and send results to IBM Cloud Logging
     """
+    # Set up logging
+    setup_logging()
+    
+    # Results dictionary for each target type
+    floating_ip_results = {}
+    virtual_guest_results = {}
+    bare_metal_results = {}
+    
     print("Starting scan of floating IPs...")
     targets = get_floating_ips()
     for target in targets:
         open_ports = scan_top_ports(target)
+        floating_ip_results[target] = open_ports
         if open_ports: 
             print(f"Open ports on {target}: {open_ports}")
     print("VPC Floating IP Scan complete.")
@@ -164,6 +272,7 @@ def main():
     targets = get_classic_infrastructure_instances()
     for target in targets:
         open_ports = scan_top_ports(target)
+        virtual_guest_results[target] = open_ports
         if open_ports:
             print(f"Open ports on {target}: {open_ports}")
     print("Classic Virtual Guests Scan complete.")
@@ -172,9 +281,29 @@ def main():
     targets = get_classic_infrastructure_hardware()
     for target in targets:
         open_ports = scan_top_ports(target)
+        bare_metal_results[target] = open_ports
         if open_ports:
             print(f"Open ports on {target}: {open_ports}")
     print("Classic Bare Metals Scan complete.")
+    
+    # Format and send results to IBM Cloud Logging
+    floating_ip_logs = format_scan_results("floating_ip", floating_ip_results)
+    virtual_guest_logs = format_scan_results("virtual_guest", virtual_guest_results)
+    bare_metal_logs = format_scan_results("bare_metal", bare_metal_results)
+    
+    # Combine all logs into a single list
+    all_logs = floating_ip_logs + virtual_guest_logs + bare_metal_logs
+    
+    # Send logs to IBM Cloud Logging
+    if all_logs:
+        print(f"Sending {len(all_logs)} log entries to IBM Cloud Logging...")
+        success = send_to_ibm_cloud_logging(all_logs)
+        if success:
+            print("Successfully sent logs to IBM Cloud Logging")
+        else:
+            print("Failed to send logs to IBM Cloud Logging")
+    else:
+        print("No open ports detected, no logs to send")
 
 
 if __name__ == "__main__":

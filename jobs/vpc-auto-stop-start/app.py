@@ -29,6 +29,12 @@ ibmcloud_api_key = os.environ.get('IBMCLOUD_API_KEY')
 if not ibmcloud_api_key:
     raise ValueError("IBMCLOUD_API_KEY environment variable not found")
 
+ignore_group =  os.environ.get('IGNORE_GROUP', '').split(',')
+if not ignore_group:
+    ignore_group = []
+ignore_group = [name.strip() for name in os.environ.get('IGNORE_GROUP', '').split(',') if name.strip()]
+
+
 def setup_logging(default_path='logging.json', default_level=logging.info, env_key='LOG_CFG'):
     path = default_path
     value = os.getenv(env_key, None)
@@ -50,7 +56,7 @@ def vpc_client():
         quit(1)
     return vpc_service
 
-ignore_group = ['hyperion', 'jbmh-locate']
+
 
 def get_iam_token():
     try:
